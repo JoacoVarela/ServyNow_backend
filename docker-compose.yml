@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+
+  mysql:
+    image: mysql:8
+    container_name: servynow-mysql
+    restart: always
+    ports:
+      - "3307:3306"
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: servynow
+      MYSQL_USER: servyuser
+      MYSQL_PASSWORD: servypass
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
