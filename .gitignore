@@ -25,3 +25,4 @@ lerna-debug.log*
 
 # npm package lock file
 package-lock.json
+/generated/prisma
