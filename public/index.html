@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ServyNow Uruguay</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --teal:#0f766e;--teal-d:#115e59;--teal-l:#ccfbf1;
+      --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+      --gray-300:#d1d5db;--gray-500:#6b7280;--gray-700:#374151;--gray-900:#111827;
+      --red:#dc2626;--green:#16a34a;--yellow:#d97706;--blue:#2563eb;
+      --shadow:0 1px 3px rgba(0,0,0,.12);--shadow-md:0 4px 12px rgba(0,0,0,.12);
+    }
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--gray-50);color:var(--gray-900);line-height:1.5;font-size:15px}
+
+    /* ─── HEADER ─── */
+    .header{background:#fff;border-bottom:1px solid var(--gray-200);box-shadow:var(--shadow);position:sticky;top:0;z-index:200}
+    .header-inner{max-width:1100px;margin:0 auto;padding:.85rem 1rem;display:flex;justify-content:space-between;align-items:center}
+    .logo{font-size:1.25rem;font-weight:800;color:var(--teal);text-decoration:none;letter-spacing:-.5px}
+    .logo span{color:var(--gray-900)}
+    nav{display:flex;gap:1.5rem;align-items:center}
+    nav a{color:var(--gray-500);text-decoration:none;font-weight:500;font-size:.9rem;cursor:pointer;padding:.25rem 0;border-bottom:2px solid transparent;transition:all .15s}
+    nav a:hover,nav a.active{color:var(--teal);border-bottom-color:var(--teal)}
+    .nav-badge{background:var(--teal);color:#fff;font-size:.7rem;padding:.1rem .4rem;border-radius:9999px;margin-left:.25rem}
+    .hdr-btns{display:flex;gap:.6rem}
+
+    /* ─── BUTTONS ─── */
+    .btn{padding:.5rem 1.1rem;border:none;border-radius:.4rem;font-weight:600;cursor:pointer;font-size:.875rem;transition:all .15s;display:inline-flex;align-items:center;gap:.4rem}
+    .btn-primary{background:var(--teal);color:#fff}
+    .btn-primary:hover{background:var(--teal-d)}
+    .btn-outline{background:#fff;color:var(--teal);border:1.5px solid var(--teal)}
+    .btn-outline:hover{background:var(--teal-l)}
+    .btn-ghost{background:transparent;color:var(--gray-500);border:1.5px solid var(--gray-300)}
+    .btn-ghost:hover{border-color:var(--gray-500)}
+    .btn-danger{background:var(--red);color:#fff}
+    .btn-sm{padding:.35rem .75rem;font-size:.8rem}
+    .btn-lg{padding:.75rem 1.75rem;font-size:1rem}
+    .btn-full{width:100%}
+
+    /* ─── LAYOUT ─── */
+    .page{display:none;animation:fadeIn .2s ease}
+    .page.show{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .container{max-width:1100px;margin:0 auto;padding:2rem 1rem}
+    .container-xs{max-width:26rem;margin:0 auto;padding:2.5rem 1rem}
+    .container-sm{max-width:38rem;margin:0 auto;padding:2rem 1rem}
+    .two-col{display:grid;grid-template-columns:280px 1fr;gap:1.5rem;align-items:start}
+    .grid-3{display:grid;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:1.25rem}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+
+    /* ─── CARD ─── */
+    .card{background:#fff;border-radius:.6rem;box-shadow:var(--shadow);border:1px solid var(--gray-200)}
+    .card-pad{padding:1.5rem}
+    .card-header{padding:1rem 1.5rem;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center}
+    .card-title{font-weight:700;font-size:1rem}
+
+    /* ─── FORMS ─── */
+    .form-group{margin-bottom:1rem}
+    label{display:block;font-weight:600;margin-bottom:.4rem;font-size:.875rem;color:var(--gray-700)}
+    input,select,textarea{width:100%;padding:.55rem .75rem;border:1.5px solid var(--gray-300);border-radius:.4rem;font-size:.9rem;font-family:inherit;transition:border-color .15s}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,118,110,.08)}
+    textarea{resize:vertical;min-height:5rem}
+    .form-hint{font-size:.78rem;color:var(--gray-500);margin-top:.3rem}
+
+    /* ─── ALERTS ─── */
+    .alert{padding:.85rem 1rem;border-radius:.4rem;font-size:.875rem;margin-bottom:1rem}
+    .alert-error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+    .alert-success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+    .alert-info{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
+
+    /* ─── BADGES / TAGS ─── */
+    .badge{display:inline-block;padding:.2rem .65rem;border-radius:9999px;font-size:.75rem;font-weight:600}
+    .badge-green{background:#dcfce7;color:#166534}
+    .badge-yellow{background:#fef3c7;color:#92400e}
+    .badge-blue{background:#dbeafe;color:#1e40af}
+    .badge-purple{background:#ede9fe;color:#4c1d95}
+    .badge-red{background:#fee2e2;color:#991b1b}
+    .badge-gray{background:var(--gray-100);color:var(--gray-700)}
+
+    /* ─── HERO ─── */
+    .hero{padding:5rem 1rem;text-align:center;background:linear-gradient(135deg,#0f766e 0%,#0d9488 50%,#14b8a6 100%);color:#fff}
+    .hero h1{font-size:2.25rem;font-weight:800;margin-bottom:1rem;line-height:1.15}
+    .hero p{font-size:1.1rem;opacity:.9;margin-bottom:2rem;max-width:32rem;margin-left:auto;margin-right:auto}
+    .hero-btns{display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap}
+    .btn-white{background:#fff;color:var(--teal);font-weight:700}
+    .btn-white:hover{background:var(--teal-l)}
+    .btn-white-outline{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.7)}
+    .btn-white-outline:hover{background:rgba(255,255,255,.1)}
+
+    /* ─── FEATURES ─── */
+    .features{padding:4rem 1rem;background:#fff}
+    .features-inner{max-width:1100px;margin:0 auto;text-align:center}
+    .features h2{font-size:1.6rem;font-weight:700;margin-bottom:.5rem}
+    .features-sub{color:var(--gray-500);margin-bottom:2.5rem}
+    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:2rem;text-align:left}
+    .feature-icon{font-size:2rem;margin-bottom:.75rem}
+    .feature-title{font-weight:700;margin-bottom:.4rem}
+    .feature-desc{color:var(--gray-500);font-size:.875rem}
+
+    /* ─── PROF CARD ─── */
+    .prof-card{background:#fff;border-radius:.6rem;box-shadow:var(--shadow);border:1px solid var(--gray-200);overflow:hidden;transition:all .2s}
+    .prof-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+    .prof-card-top{background:linear-gradient(135deg,var(--teal),#0d9488);padding:1.25rem;color:#fff}
+    .prof-avatar{width:3rem;height:3rem;border-radius:9999px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:1.25rem;font-weight:700;margin-bottom:.6rem}
+    .prof-name{font-weight:700;font-size:1rem}
+    .prof-card-body{padding:1rem}
+    .prof-row{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.5rem;color:var(--gray-700)}
+    .prof-stars{color:#fbbf24;font-weight:700}
+    .prof-bio{font-size:.85rem;color:var(--gray-500);margin-bottom:.85rem;line-height:1.4}
+    .prof-footer{border-top:1px solid var(--gray-100);padding:.75rem 1rem;display:flex;gap:.5rem}
+
+    /* ─── JOB CARD ─── */
+    .job-card{background:#fff;border-left:4px solid var(--teal);border-radius:.4rem;box-shadow:var(--shadow);padding:1.1rem 1.25rem;margin-bottom:.85rem;display:flex;justify-content:space-between;align-items:start;gap:1rem}
+    .job-desc{font-weight:600;margin-bottom:.2rem}
+    .job-meta{font-size:.82rem;color:var(--gray-500)}
+
+    /* ─── SIDEBAR ─── */
+    .sidebar-card{background:#fff;border-radius:.6rem;box-shadow:var(--shadow);border:1px solid var(--gray-200);overflow:hidden;margin-bottom:1rem}
+    .sidebar-card-header{background:linear-gradient(135deg,var(--teal),#0d9488);padding:1.5rem;color:#fff;text-align:center}
+    .sidebar-avatar{width:4rem;height:4rem;border-radius:9999px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;margin:0 auto .75rem}
+    .sidebar-name{font-weight:700;font-size:1.1rem}
+    .sidebar-role{font-size:.8rem;opacity:.85}
+    .sidebar-body{padding:1rem}
+    .sidebar-stat{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--gray-100);font-size:.875rem}
+    .sidebar-stat:last-child{border-bottom:none}
+    .sidebar-stat-val{font-weight:700;color:var(--teal)}
+
+    /* ─── EMPTY STATE ─── */
+    .empty{text-align:center;padding:3rem;color:var(--gray-500)}
+    .empty-icon{font-size:2.5rem;margin-bottom:.75rem}
+    .empty-text{font-weight:600;margin-bottom:.35rem;color:var(--gray-700)}
+    .empty-sub{font-size:.875rem}
+
+    /* ─── DIVIDER ─── */
+    .divider{border:none;border-top:1px solid var(--gray-200);margin:1.25rem 0}
+    .section-title{font-size:1.1rem;font-weight:700;margin-bottom:1.1rem;color:var(--gray-900)}
+    .text-sm{font-size:.875rem}
+    .text-muted{color:var(--gray-500)}
+    .mt-1{margin-top:.5rem}.mt-2{margin-top:1rem}.mt-3{margin-top:1.5rem}
+    .mb-1{margin-bottom:.5rem}.mb-2{margin-bottom:1rem}
+    .flex{display:flex}.gap-1{gap:.5rem}.gap-2{gap:1rem}.items-center{align-items:center}.justify-between{justify-content:space-between}
+
+    @media(max-width:768px){
+      .two-col{grid-template-columns:1fr}
+      .grid-2{grid-template-columns:1fr}
+      .hero h1{font-size:1.6rem}
+      nav a{font-size:.82rem}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" onclick="go('home')">Servy<span>Now</span></a>
+    <nav id="mainNav">
+      <a onclick="go('home')">Inicio</a>
+      <a onclick="go('search')">Buscar</a>
+      <a id="navDash" onclick="go('dashboard')" class="hidden">Mi Panel</a>
+      <a id="navJobs" onclick="go('jobs')" class="hidden">Trabajos</a>
+    </nav>
+    <div class="hdr-btns" id="hdrGuest">
+      <button class="btn btn-ghost" onclick="go('login')">Ingresar</button>
+      <button class="btn btn-primary" onclick="go('register')">Registrarse</button>
+    </div>
+    <div class="hdr-btns hidden" id="hdrUser">
+      <span id="hdrName" class="text-sm" style="color:var(--gray-700);font-weight:600"></span>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════ LANDING ═══════════════════ -->
+<div id="page-home" class="page show">
+  <div class="hero">
+    <h1>Contratá profesionales<br>de confianza en Uruguay</h1>
+    <p>Electricistas, plomeros, gasfiteros, pintores y más — verificados, con reseñas reales de vecinos uruguayos.</p>
+    <div class="hero-btns">
+      <button class="btn btn-white btn-lg" onclick="go('search')">Buscar profesional</button>
+      <button class="btn btn-white-outline btn-lg" onclick="go('register')">Ofrecé tu servicio</button>
+    </div>
+  </div>
+  <div class="features">
+    <div class="features-inner">
+      <h2>¿Por qué ServyNow?</h2>
+      <p class="features-sub">La plataforma de servicios pensada para Uruguay</p>
+      <div class="features-grid">
+        <div>
+          <div class="feature-icon">🔐</div>
+          <div class="feature-title">Profesionales verificados</div>
+          <div class="feature-desc">Revisamos cada perfil antes de que aparezca en la plataforma.</div>
+        </div>
+        <div>
+          <div class="feature-icon">⭐</div>
+          <div class="feature-title">Reseñas reales</div>
+          <div class="feature-desc">Solo clientes que completaron un trabajo pueden dejar reseña.</div>
+        </div>
+        <div>
+          <div class="feature-icon">📍</div>
+          <div class="feature-title">Por departamento</div>
+          <div class="feature-desc">Encontrá profesionales en Montevideo, Canelones, Maldonado y todo el país.</div>
+        </div>
+        <div>
+          <div class="feature-icon">💬</div>
+          <div class="feature-title">Gestión de trabajos</div>
+          <div class="feature-desc">Seguí el estado de cada trabajo desde que lo pedís hasta que se completa.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
+<div id="page-login" class="page">
+  <div class="container-xs">
+    <div class="card card-pad mt-3">
+      <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:1.5rem">Ingresá a tu cuenta</h2>
+      <div id="loginAlert" class="alert alert-error hidden"></div>
+      <div class="form-group">
+        <label>Email</label>
+        <input id="loginEmail" type="email" value="juan@gmail.com"/>
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input id="loginPassword" type="password" value="123456"/>
+      </div>
+      <button class="btn btn-primary btn-full mt-2" onclick="doLogin()">Ingresar</button>
+      <hr class="divider"/>
+      <p class="text-sm text-muted" style="text-align:center">¿No tenés cuenta? <a onclick="go('register')" style="color:var(--teal);font-weight:600;cursor:pointer">Registrate</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ REGISTER ═══════════════════ -->
+<div id="page-register" class="page">
+  <div class="container-xs">
+    <div class="card card-pad mt-3">
+      <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:1.5rem">Crear cuenta</h2>
+      <div id="regAlert" class="alert alert-error hidden"></div>
+
+      <div class="form-group">
+        <label>Tipo de cuenta</label>
+        <select id="regRole" onchange="toggleProFields()">
+          <option value="CLIENT">Usuario — busco profesionales</option>
+          <option value="PROFESSIONAL">Profesional — ofrezco servicios</option>
+        </select>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input id="regFirstName" value="Juan"/>
+        </div>
+        <div class="form-group">
+          <label>Apellido</label>
+          <input id="regLastName" value="García"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input id="regEmail" type="email" value="juan@gmail.com"/>
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input id="regPassword" type="password" value="123456"/>
+      </div>
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input id="regPhone" value="092123456"/>
+        <div class="form-hint">Solo dígitos, guiones y espacios — mín. 7 caracteres</div>
+      </div>
+
+      <div id="proFields" class="hidden">
+        <hr class="divider"/>
+        <p class="text-sm" style="font-weight:700;margin-bottom:1rem;color:var(--teal)">Información profesional</p>
+
+        <div class="form-group">
+          <label>Descripción / Especialidad</label>
+          <textarea id="regBio">Electricista matriculado con más de 5 años de experiencia en Montevideo. Instalaciones, reparaciones y mantenimiento.</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Departamento</label>
+          <select id="regCity">
+            <option>Montevideo</option>
+            <option>Canelones</option>
+            <option>Maldonado</option>
+            <option>San José</option>
+            <option>Colonia</option>
+            <option>Salto</option>
+            <option>Paysandú</option>
+            <option>Rivera</option>
+            <option>Rocha</option>
+            <option>Tacuarembó</option>
+            <option>Otro</option>
+          </select>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Tarifa mínima (UYU)</label>
+            <input id="regMinPrice" type="number" value="2000"/>
+          </div>
+          <div class="form-group">
+            <label>Tarifa máxima (UYU)</label>
+            <input id="regMaxPrice" type="number" value="10000"/>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full mt-2" onclick="doRegister()">Registrarse</button>
+      <hr class="divider"/>
+      <p class="text-sm text-muted" style="text-align:center">¿Ya tenés cuenta? <a onclick="go('login')" style="color:var(--teal);font-weight:600;cursor:pointer">Ingresá</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ SEARCH ═══════════════════ -->
+<div id="page-search" class="page">
+  <div class="container">
+    <div class="card card-pad mb-2">
+      <div class="grid-2" style="margin-bottom:.75rem">
+        <div class="form-group" style="margin:0">
+          <label>¿Qué necesitás?</label>
+          <input id="searchQ" placeholder="Electricista, plomero, pintor…"/>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Departamento</label>
+          <select id="searchCity">
+            <option value="">Todos</option>
+            <option>Montevideo</option><option>Canelones</option><option>Maldonado</option>
+            <option>San José</option><option>Colonia</option><option>Salto</option>
+            <option>Paysandú</option><option>Rivera</option><option>Rocha</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-bottom:.75rem">
+        <div class="form-group" style="margin:0">
+          <label>Tarifa máx. (UYU)</label>
+          <input id="searchMaxP" type="number" placeholder="Sin límite"/>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Disponibilidad</label>
+          <select id="searchAvail">
+            <option value="">Cualquiera</option>
+            <option value="AVAILABLE">Disponible ahora</option>
+            <option value="BUSY">Ocupado</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="doSearch()">Buscar profesionales</button>
+    </div>
+    <div id="searchResults"><div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Buscá un profesional</div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DASHBOARD CLIENTE ═══════════════════ -->
+<div id="page-dashboard-client" class="page">
+  <div class="container">
+    <h2 class="section-title">Mi Panel — Cliente</h2>
+    <div class="grid-3" style="margin-bottom:2rem">
+      <div class="card card-pad text-sm">
+        <div style="font-size:2rem;margin-bottom:.5rem">🛠️</div>
+        <div style="font-size:1.6rem;font-weight:800;color:var(--teal)" id="statJobsTotal">—</div>
+        <div class="text-muted">Trabajos totales</div>
+      </div>
+      <div class="card card-pad text-sm">
+        <div style="font-size:2rem;margin-bottom:.5rem">✅</div>
+        <div style="font-size:1.6rem;font-weight:800;color:var(--green)" id="statJobsDone">—</div>
+        <div class="text-muted">Completados</div>
+      </div>
+      <div class="card card-pad text-sm">
+        <div style="font-size:2rem;margin-bottom:.5rem">⏳</div>
+        <div style="font-size:1.6rem;font-weight:800;color:var(--yellow)" id="statJobsPending">—</div>
+        <div class="text-muted">En curso</div>
+      </div>
+    </div>
+    <div class="flex gap-2 mb-2">
+      <h3 class="section-title" style="margin:0;flex:1">Mis trabajos recientes</h3>
+      <button class="btn btn-primary btn-sm" onclick="go('search')">+ Contratar profesional</button>
+    </div>
+    <div id="clientJobsList"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DASHBOARD PROFESIONAL ═══════════════════ -->
+<div id="page-dashboard-pro" class="page">
+  <div class="container">
+    <h2 class="section-title">Mi Panel — Profesional</h2>
+    <div class="two-col">
+      <!-- Sidebar -->
+      <aside>
+        <div class="sidebar-card">
+          <div class="sidebar-card-header">
+            <div class="sidebar-avatar" id="proAvatarLetter">J</div>
+            <div class="sidebar-name" id="proDisplayName">—</div>
+            <div class="sidebar-role">Profesional verificado</div>
+          </div>
+          <div class="sidebar-body">
+            <div class="sidebar-stat"><span>Rating</span><span class="sidebar-stat-val" id="proRating">—</span></div>
+            <div class="sidebar-stat"><span>Departamento</span><span class="sidebar-stat-val" id="proCity">—</span></div>
+            <div class="sidebar-stat"><span>Tarifa</span><span class="sidebar-stat-val" id="proPriceRange">—</span></div>
+            <div class="sidebar-stat"><span>Disponibilidad</span><span class="sidebar-stat-val" id="proAvailBadge">—</span></div>
+          </div>
+        </div>
+        <div class="card card-pad">
+          <div class="section-title" style="font-size:.95rem">Cambiar disponibilidad</div>
+          <div class="form-group mb-1">
+            <select id="availSelect">
+              <option value="AVAILABLE">✅ Disponible ahora</option>
+              <option value="BUSY">🟡 Ocupado</option>
+              <option value="OFFLINE">🔴 No disponible</option>
+            </select>
+          </div>
+          <button class="btn btn-outline btn-full btn-sm" onclick="updateAvailability()">Actualizar</button>
+        </div>
+      </aside>
+      <!-- Main -->
+      <main>
+        <div class="grid-2" style="margin-bottom:1.25rem">
+          <div class="card card-pad text-sm">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--teal)" id="proStatPending">—</div>
+            <div class="text-muted">Solicitudes nuevas</div>
+          </div>
+          <div class="card card-pad text-sm">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--green)" id="proStatDone">—</div>
+            <div class="text-muted">Trabajos completados</div>
+          </div>
+        </div>
+        <h3 class="section-title">Solicitudes de trabajo</h3>
+        <div id="proJobsList"></div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TODOS LOS TRABAJOS ═══════════════════ -->
+<div id="page-jobs" class="page">
+  <div class="container-sm">
+    <h2 class="section-title">Mis trabajos</h2>
+    <div id="allJobsList"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL CREAR JOB ═══════════════════ -->
+<div id="modalJob" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center">
+  <div class="card card-pad" style="width:90%;max-width:26rem">
+    <div class="flex justify-between items-center mb-2">
+      <h3 style="font-weight:700">Solicitar servicio</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+    </div>
+    <p class="text-sm text-muted mb-2">Profesional: <strong id="modalProName"></strong></p>
+    <div class="form-group">
+      <label>¿Qué necesitás?</label>
+      <textarea id="jobDesc" placeholder="Describí el trabajo, por ej: Revisar instalación eléctrica en casa de 3 ambientes…"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Presupuesto aproximado (UYU)</label>
+      <input id="jobBudget" type="number" placeholder="Ej: 3000"/>
+    </div>
+    <div class="alert alert-error hidden" id="jobAlert"></div>
+    <button class="btn btn-primary btn-full" onclick="submitJob()">Enviar solicitud</button>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:6500/api';
+let token = localStorage.getItem('token');
+let role  = localStorage.getItem('role');
+let name  = localStorage.getItem('name');
+let profId= localStorage.getItem('profId'); // only for professionals
+let selectedProfId = null;
+let selectedProfName = null;
+
+// ─── NAV ───
+function go(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('show'));
+  const target = document.getElementById('page-'+page);
+  if(!target) return;
+  target.classList.add('show');
+
+  if(page==='search') doSearch();
+  if(page==='dashboard'){
+    if(role==='PROFESSIONAL') { document.getElementById('page-dashboard-pro').classList.add('show'); document.getElementById('page-dashboard').classList.remove('show'); loadProDash(); return; }
+    document.getElementById('page-dashboard-client').classList.add('show'); document.getElementById('page-dashboard-pro').classList.remove('show');
+    loadClientDash();
+  }
+  if(page==='jobs') loadAllJobs();
+}
+
+function showDash(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('show'));
+  if(role==='PROFESSIONAL'){
+    document.getElementById('page-dashboard-pro').classList.add('show');
+    loadProDash();
+  } else {
+    document.getElementById('page-dashboard-client').classList.add('show');
+    loadClientDash();
+  }
+}
+
+// ─── UI STATE ───
+function updateNav(){
+  if(token){
+    document.getElementById('hdrGuest').classList.add('hidden');
+    document.getElementById('hdrUser').classList.remove('hidden');
+    document.getElementById('hdrName').textContent = name || (role==='PROFESSIONAL'?'Profesional':'Usuario');
+    document.getElementById('navDash').classList.remove('hidden');
+    document.getElementById('navJobs').classList.remove('hidden');
+  } else {
+    document.getElementById('hdrGuest').classList.remove('hidden');
+    document.getElementById('hdrUser').classList.add('hidden');
+    document.getElementById('navDash').classList.add('hidden');
+    document.getElementById('navJobs').classList.add('hidden');
+  }
+}
+
+// ─── AUTH ───
+function toggleProFields(){
+  const v = document.getElementById('regRole').value;
+  document.getElementById('proFields').classList.toggle('hidden', v!=='PROFESSIONAL');
+}
+
+async function doRegister(){
+  clearAlert('regAlert');
+  const role2 = document.getElementById('regRole').value;
+  const firstName = document.getElementById('regFirstName').value.trim();
+  const lastName  = document.getElementById('regLastName').value.trim();
+  const phone     = document.getElementById('regPhone').value.trim();
+  const payload = {
+    email:    document.getElementById('regEmail').value.trim(),
+    password: document.getElementById('regPassword').value,
+    role: role2,
+  };
+  if(role2==='PROFESSIONAL'){
+    payload.professional = {
+      firstName, lastName, phoneNumber: phone,
+      bio:      document.getElementById('regBio').value.trim(),
+      city:     document.getElementById('regCity').value,
+      minPrice: Number(document.getElementById('regMinPrice').value),
+      maxPrice: Number(document.getElementById('regMaxPrice').value),
+    };
+  } else {
+    payload.user = { firstName, lastName, phoneNumber: phone };
+  }
+
+  const res = await api('/accounts/register','POST',payload);
+  if(res._err){ showAlert('regAlert', res._err); return; }
+
+  // response shape: { account:{id,email,role}, profile, tokens:{accessToken,refreshToken} }
+  const { account, tokens } = res;
+  saveSession(tokens.accessToken, tokens.refreshToken, account.role,
+    res.profile?.firstName ? `${res.profile.firstName} ${res.profile.lastName}` : account.email,
+    res.profile?.id);
+  showDash();
+}
+
+async function doLogin(){
+  clearAlert('loginAlert');
+  const res = await api('/accounts/login','POST',{
+    email:    document.getElementById('loginEmail').value.trim(),
+    password: document.getElementById('loginPassword').value,
+  });
+  if(res._err){ showAlert('loginAlert', res._err); return; }
+
+  // response shape: { id, email, role, professional/client, tokens:{accessToken,refreshToken} }
+  const { tokens } = res;
+  const prof = res.professional;
+  const cli  = res.client;
+  const displayName = prof ? `${prof.firstName} ${prof.lastName}` :
+                      cli  ? `${cli.firstName} ${cli.lastName}`  : res.email;
+  saveSession(tokens.accessToken, tokens.refreshToken, res.role, displayName, prof?.id);
+  showDash();
+}
+
+function saveSession(at, rt, r, n, pid){
+  token = at; role = r; name = n; profId = pid||null;
+  localStorage.setItem('token', at);
+  localStorage.setItem('refresh', rt);
+  localStorage.setItem('role', r);
+  localStorage.setItem('name', n);
+  if(pid) localStorage.setItem('profId', pid);
+  updateNav();
+}
+
+function doLogout(){
+  api('/accounts/logout','POST');
+  token=role=name=profId=null;
+  localStorage.clear();
+  updateNav();
+  go('home');
+}
+
+// ─── SEARCH ───
+async function doSearch(){
+  const params = new URLSearchParams();
+  const q    = document.getElementById('searchQ')?.value?.trim();
+  const city = document.getElementById('searchCity')?.value;
+  const maxP = document.getElementById('searchMaxP')?.value;
+  const avail= document.getElementById('searchAvail')?.value;
+  if(q) params.append('search',q);
+  if(city) params.append('city',city);
+  if(maxP) params.append('maxPrice',maxP);
+  if(avail) params.append('availability',avail);
+
+  const res = await api('/professionals?'+params.toString());
+  const el = document.getElementById('searchResults');
+  if(res._err || !res.items){ el.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">Error al cargar</div></div>'; return; }
+  if(!res.items.length){ el.innerHTML = '<div class="empty"><div class="empty-icon">😕</div><div class="empty-text">No encontramos profesionales</div><div class="empty-sub">Probá cambiar los filtros</div></div>'; return; }
+
+  el.innerHTML = `<div class="grid-3">${res.items.map(profCard).join('')}</div>`;
+}
+
+function profCard(p){
+  const avColor = p.availability==='AVAILABLE'?'badge-green':p.availability==='BUSY'?'badge-yellow':'badge-gray';
+  const avLabel = p.availability==='AVAILABLE'?'Disponible':p.availability==='BUSY'?'Ocupado':'No disponible';
+  const initials = `${p.firstName?.[0]||''}${p.lastName?.[0]||''}`.toUpperCase();
+  const clientBtn = token && role==='CLIENT' ? `<button class="btn btn-primary btn-sm" onclick="openModal('${p.id}','${p.firstName} ${p.lastName}')">Contratar</button>` : '';
+  return `
+  <div class="prof-card">
+    <div class="prof-card-top">
+      <div class="prof-avatar">${initials}</div>
+      <div class="prof-name">${p.firstName} ${p.lastName}</div>
+    </div>
+    <div class="prof-card-body">
+      <div class="prof-row">
+        <span class="prof-stars">⭐ ${(p.rating||0).toFixed(1)}</span>
+        <span class="badge ${avColor}">${avLabel}</span>
+      </div>
+      <div class="prof-bio">${p.bio||''}</div>
+      ${p.city?`<div class="text-sm text-muted mb-1">📍 ${p.city}</div>`:''}
+      ${p.minPrice?`<div class="text-sm" style="color:var(--teal);font-weight:600">Desde $${p.minPrice.toLocaleString()} UYU</div>`:''}
+    </div>
+    <div class="prof-footer">${clientBtn}</div>
+  </div>`;
+}
+
+// ─── JOBS ───
+function openModal(profId, pName){
+  if(!token){go('login');return;}
+  selectedProfId = profId; selectedProfName = pName;
+  document.getElementById('modalProName').textContent = pName;
+  document.getElementById('jobDesc').value='';
+  document.getElementById('jobBudget').value='';
+  clearAlert('jobAlert');
+  document.getElementById('modalJob').style.display='flex';
+}
+function closeModal(){ document.getElementById('modalJob').style.display='none'; }
+
+async function submitJob(){
+  clearAlert('jobAlert');
+  const res = await api('/jobs','POST',{
+    professionalId: selectedProfId,
+    description: document.getElementById('jobDesc').value.trim(),
+    budget: Number(document.getElementById('jobBudget').value)||0,
+  });
+  if(res._err){ showAlert('jobAlert',res._err); return; }
+  closeModal();
+  showToast('¡Solicitud enviada! El profesional la recibirá pronto.');
+}
+
+async function loadClientDash(){
+  const res = await api('/jobs/my');
+  const jobs = res._err ? [] : (res.data||res);
+  document.getElementById('statJobsTotal').textContent   = jobs.length;
+  document.getElementById('statJobsDone').textContent    = jobs.filter(j=>j.status==='COMPLETED').length;
+  document.getElementById('statJobsPending').textContent = jobs.filter(j=>['PENDING','ACCEPTED','IN_PROGRESS'].includes(j.status)).length;
+
+  const el = document.getElementById('clientJobsList');
+  if(!jobs.length){ el.innerHTML='<div class="empty"><div class="empty-icon">🛠️</div><div class="empty-text">Todavía no pediste ningún trabajo</div><div class="empty-sub"><a onclick="go(\'search\')" style="color:var(--teal);cursor:pointer">Buscá un profesional ahora</a></div></div>'; return; }
+  el.innerHTML = jobs.slice(0,6).map(jobRow).join('');
+}
+
+async function loadProDash(){
+  // Load professional profile from jobs list
+  const jobs = await api('/jobs/my');
+  const list = jobs._err ? [] : (jobs.data||jobs);
+
+  document.getElementById('proStatPending').textContent = list.filter(j=>j.status==='PENDING').length;
+  document.getElementById('proStatDone').textContent    = list.filter(j=>j.status==='COMPLETED').length;
+
+  // Try to load own profile info
+  const pRes = await api('/professionals');
+  const profs = pRes._err ? [] : (pRes.items||pRes.data?.items||[]);
+  const myProf = profs[0];
+  if(myProf){
+    const initials = `${myProf.firstName?.[0]||''}${myProf.lastName?.[0]||''}`.toUpperCase();
+    document.getElementById('proAvatarLetter').textContent = initials;
+    document.getElementById('proDisplayName').textContent  = `${myProf.firstName} ${myProf.lastName}`;
+    document.getElementById('proRating').textContent       = `⭐ ${(myProf.rating||0).toFixed(1)}`;
+    document.getElementById('proCity').textContent         = myProf.city||'—';
+    document.getElementById('proPriceRange').textContent   = myProf.minPrice?`$${myProf.minPrice.toLocaleString()} – $${myProf.maxPrice?.toLocaleString()} UYU`:'—';
+    document.getElementById('proAvailBadge').textContent   = myProf.availability==='AVAILABLE'?'✅ Disponible':myProf.availability==='BUSY'?'🟡 Ocupado':'🔴 No disponible';
+    document.getElementById('availSelect').value = myProf.availability||'AVAILABLE';
+    localStorage.setItem('profId', myProf.id);
+    profId = myProf.id;
+  }
+
+  const el = document.getElementById('proJobsList');
+  if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No tenés solicitudes todavía</div></div>'; return; }
+  el.innerHTML = list.map(j=>proJobRow(j)).join('');
+}
+
+async function loadAllJobs(){
+  const res = await api('/jobs/my');
+  const list = res._err ? [] : (res.data||res);
+  const el = document.getElementById('allJobsList');
+  if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No tenés trabajos</div></div>'; return; }
+  el.innerHTML = list.map(role==='PROFESSIONAL'?proJobRow:jobRow).join('');
+}
+
+function jobRow(j){
+  return `
+  <div class="job-card">
+    <div>
+      <div class="job-desc">${j.description||'Sin descripción'}</div>
+      <div class="job-meta">${new Date(j.createdAt).toLocaleDateString('es-UY',{day:'2-digit',month:'short',year:'numeric'})}</div>
+    </div>
+    <span class="badge ${statusBadge(j.status)}">${statusLabel(j.status)}</span>
+  </div>`;
+}
+
+function proJobRow(j){
+  const btns = [];
+  if(j.status==='PENDING')      btns.push(`<button class="btn btn-primary btn-sm" onclick="changeStatus('${j.id}','ACCEPTED')">Aceptar</button>`);
+  if(j.status==='ACCEPTED')     btns.push(`<button class="btn btn-primary btn-sm" onclick="changeStatus('${j.id}','IN_PROGRESS')">Iniciar trabajo</button>`);
+  if(j.status==='IN_PROGRESS')  btns.push(`<button class="btn btn-primary btn-sm" onclick="changeStatus('${j.id}','COMPLETED')">Marcar completado</button>`);
+  return `
+  <div class="job-card" style="flex-direction:column;gap:.75rem">
+    <div class="flex justify-between items-center">
+      <div>
+        <div class="job-desc">${j.description||'Sin descripción'}</div>
+        <div class="job-meta">${j.budget?`Presupuesto: $${j.budget.toLocaleString()} UYU · `:''}${new Date(j.createdAt).toLocaleDateString('es-UY')}</div>
+      </div>
+      <span class="badge ${statusBadge(j.status)}">${statusLabel(j.status)}</span>
+    </div>
+    ${btns.length?`<div class="flex gap-1">${btns.join('')}</div>`:''}
+  </div>`;
+}
+
+async function changeStatus(jobId, status){
+  const res = await api(`/jobs/${jobId}/status`,'PATCH',{status});
+  if(res._err){ alert(res._err); return; }
+  showToast('Estado actualizado');
+  loadProDash();
+}
+
+async function updateAvailability(){
+  if(!profId){ showToast('No se encontró perfil profesional','error'); return; }
+  const avail = document.getElementById('availSelect').value;
+  const res = await api(`/professionals/${profId}`,'PUT',{availability:avail});
+  if(res._err){ showToast(res._err,'error'); return; }
+  showToast('Disponibilidad actualizada');
+  loadProDash();
+}
+
+// ─── HELPERS ───
+function statusLabel(s){ return {PENDING:'Pendiente',ACCEPTED:'Aceptado',IN_PROGRESS:'En curso',COMPLETED:'Completado',CANCELED:'Cancelado'}[s]||s; }
+function statusBadge(s){ return {PENDING:'badge-yellow',ACCEPTED:'badge-blue',IN_PROGRESS:'badge-purple',COMPLETED:'badge-green',CANCELED:'badge-red'}[s]||'badge-gray'; }
+
+function showAlert(id, msg){ const el=document.getElementById(id); el.textContent=msg; el.classList.remove('hidden'); }
+function clearAlert(id){ const el=document.getElementById(id); if(el){ el.textContent=''; el.classList.add('hidden'); } }
+
+let _toastTimer;
+function showToast(msg, type='success'){
+  let t = document.getElementById('_toast');
+  if(!t){ t=document.createElement('div'); t.id='_toast'; t.style.cssText='position:fixed;bottom:1.5rem;right:1.5rem;padding:.75rem 1.25rem;border-radius:.5rem;font-size:.875rem;font-weight:600;color:#fff;z-index:9999;transition:opacity .3s'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.style.background = type==='error'?'var(--red)':'var(--teal)';
+  t.style.opacity='1';
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(()=>t.style.opacity='0', 3000);
+}
+
+async function api(path, method='GET', body){
+  try{
+    const opts = { method, headers:{'Content-Type':'application/json'} };
+    if(token) opts.headers['Authorization']='Bearer '+token;
+    if(body)  opts.body = JSON.stringify(body);
+    const r = await fetch(API+path, opts);
+    const d = await r.json();
+    if(!r.ok) return { _err: d?.message || d?.error || 'Error en la solicitud' };
+    return d;
+  } catch(e){
+    return { _err: 'Sin conexión al servidor' };
+  }
+}
+
+// ─── INIT ───
+updateNav();
+if(token && role){
+  // already logged in, go to dashboard
+  // don't auto-redirect, let user click
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ServyNow — API Playground</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --teal:#0f766e;--teal-d:#115e59;--teal-l:#ccfbf1;
+  --bg:#0f172a;--surface:#1e293b;--surface2:#273549;--border:#334155;
+  --text:#e2e8f0;--muted:#94a3b8;--green:#22c55e;--red:#f87171;
+  --yellow:#fbbf24;--blue:#60a5fa;--purple:#a78bfa;--orange:#fb923c;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",monospace;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden;font-size:13px}
+
+/* ── TOPBAR ── */
+#topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:.6rem 1rem;display:flex;gap:.75rem;align-items:center;flex-shrink:0;flex-wrap:wrap}
+#topbar h1{font-size:.95rem;font-weight:700;color:var(--teal);white-space:nowrap}
+.user-pill{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.3rem .65rem;font-size:.75rem;cursor:pointer;transition:border-color .15s}
+.user-pill:hover{border-color:var(--teal)}
+.user-pill.active{border-color:var(--green);background:#052e16}
+.user-pill b{display:block;font-size:.7rem;color:var(--muted)}
+#token-status{margin-left:auto;font-size:.72rem;color:var(--muted);white-space:nowrap}
+#token-status span{color:var(--green)}
+
+/* ── LAYOUT ── */
+#main{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ── */
+#sidebar{width:180px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:.5rem 0}
+.mod-btn{display:flex;align-items:center;gap:.5rem;width:100%;padding:.55rem 1rem;font-size:.78rem;font-weight:500;color:var(--muted);background:none;border:none;cursor:pointer;text-align:left;transition:all .15s;border-left:3px solid transparent}
+.mod-btn:hover{color:var(--text);background:var(--surface2)}
+.mod-btn.active{color:var(--teal);background:#0f2a27;border-left-color:var(--teal)}
+.mod-btn .ico{font-size:.95rem;width:18px;text-align:center}
+.sidebar-section{font-size:.65rem;font-weight:700;text-transform:uppercase;color:var(--border);padding:.75rem 1rem .25rem;letter-spacing:.07em}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;padding:0}
+.module{display:none;padding:1rem}
+.module.active{display:block}
+.mod-title{font-size:1rem;font-weight:700;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem}
+
+/* ── ENDPOINT CARDS ── */
+.ep{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:.85rem;overflow:hidden}
+.ep-head{display:flex;align-items:center;gap:.6rem;padding:.6rem .85rem;cursor:pointer;user-select:none}
+.ep-head:hover{background:var(--surface2)}
+.method{padding:.2rem .5rem;border-radius:4px;font-size:.7rem;font-weight:700;min-width:48px;text-align:center}
+.GET{background:#1e3a5f;color:#93c5fd}.POST{background:#14532d;color:#86efac}
+.PUT{background:#431407;color:#fdba74}.PATCH{background:#312e81;color:#c4b5fd}
+.DELETE{background:#450a0a;color:#fca5a5}
+.ep-path{font-size:.82rem;font-family:monospace;color:var(--text)}
+.ep-desc{font-size:.72rem;color:var(--muted);margin-left:auto}
+.ep-body{padding:.85rem;display:none;border-top:1px solid var(--border)}
+.ep.open .ep-body{display:block}
+.ep-body .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.5rem}
+
+/* ── INPUTS ── */
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:.4rem .6rem;font-size:.78rem;font-family:inherit;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal)}
+textarea{min-height:4rem;resize:vertical}
+.field{flex:1;min-width:120px}
+.field label{display:block;font-size:.7rem;color:var(--muted);margin-bottom:.2rem}
+.btn-run{background:var(--teal);color:#fff;border:none;padding:.4rem .9rem;border-radius:5px;cursor:pointer;font-size:.78rem;font-weight:600;white-space:nowrap}
+.btn-run:hover{background:var(--teal-d)}
+.btn-sm-outline{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.3rem .6rem;border-radius:4px;cursor:pointer;font-size:.72rem}
+.btn-sm-outline:hover{border-color:var(--teal);color:var(--teal)}
+
+/* ── RESPONSE ── */
+.response{margin-top:.6rem;border-radius:5px;overflow:hidden}
+.res-head{display:flex;align-items:center;gap:.6rem;padding:.35rem .7rem;font-size:.72rem;background:var(--surface2)}
+.res-status{font-weight:700;padding:.15rem .45rem;border-radius:3px;font-size:.7rem}
+.s2xx{background:#14532d;color:#86efac}.s4xx{background:#450a0a;color:#fca5a5}.s5xx{background:#431407;color:#fdba74}
+.res-body{background:#0d1117;padding:.75rem;max-height:280px;overflow-y:auto;font-size:.75rem;line-height:1.5;font-family:"JetBrains Mono","Fira Code",monospace;white-space:pre-wrap;word-break:break-all}
+.jk{color:#79c0ff}.js{color:#a5d6ff}.jn{color:#ffa657}.jb{color:#ff7b72}.jp{color:#ff7b72}
+
+/* ── CHIPS (pre-fill IDs) ── */
+.chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.5rem}
+.chip{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:.2rem .5rem;font-size:.68rem;cursor:pointer;font-family:monospace;color:var(--muted)}
+.chip:hover{border-color:var(--teal);color:var(--teal)}
+.chip-label{font-size:.68rem;color:var(--muted);align-self:center;white-space:nowrap}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <h1>⚡ ServyNow Playground</h1>
+  <span style="color:var(--muted);font-size:.72rem">Login rápido:</span>
+
+  <div class="user-pill" onclick="quickLogin('juan@test.com','test1234','CLIENT','Juan García')">
+    <b>CLIENT 1</b>juan@test.com
+  </div>
+  <div class="user-pill" onclick="quickLogin('sofia@test.com','test1234','CLIENT','Sofía Martínez')">
+    <b>CLIENT 2</b>sofia@test.com
+  </div>
+  <div class="user-pill" onclick="quickLogin('carlos.plomero@test.com','test1234','PROFESSIONAL','Carlos (Plomero)')">
+    <b>PROFESIONAL</b>carlos.plomero@test.com
+  </div>
+  <div class="user-pill" onclick="quickLogin('ana.electrica@test.com','test1234','PROFESSIONAL','Ana (Electricista)')">
+    <b>PROFESIONAL</b>ana.electrica@test.com
+  </div>
+  <div class="user-pill" onclick="quickLogin('admin@servynow.com','admin1234','ADMIN','Admin')">
+    <b>ADMIN</b>admin@servynow.com
+  </div>
+  <button class="btn-sm-outline" onclick="logout()" style="margin-left:.25rem">Logout</button>
+  <span id="token-status">Sin sesión</span>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-section">Core</div>
+    <button class="mod-btn active" onclick="showMod('auth')"><span class="ico">🔑</span>Auth</button>
+    <button class="mod-btn" onclick="showMod('professionals')"><span class="ico">👷</span>Profesionales</button>
+    <button class="mod-btn" onclick="showMod('jobs')"><span class="ico">🔧</span>Trabajos</button>
+    <div class="sidebar-section">Marketplace</div>
+    <button class="mod-btn" onclick="showMod('quotes')"><span class="ico">💰</span>Presupuestos</button>
+    <button class="mod-btn" onclick="showMod('appointments')"><span class="ico">📅</span>Citas</button>
+    <button class="mod-btn" onclick="showMod('chat')"><span class="ico">💬</span>Chat</button>
+    <div class="sidebar-section">Cuenta</div>
+    <button class="mod-btn" onclick="showMod('notifications')"><span class="ico">🔔</span>Notificaciones</button>
+    <button class="mod-btn" onclick="showMod('subscriptions')"><span class="ico">⭐</span>Suscripciones</button>
+    <button class="mod-btn" onclick="showMod('payments')"><span class="ico">💳</span>Pagos</button>
+    <button class="mod-btn" onclick="showMod('stats')"><span class="ico">📊</span>Estadísticas</button>
+    <div class="sidebar-section">Sistema</div>
+    <button class="mod-btn" onclick="showMod('admin')"><span class="ico">🛡️</span>Admin</button>
+  </nav>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ══ AUTH ══════════════════════════════════════════════════════════ -->
+    <div id="mod-auth" class="module active">
+      <div class="mod-title">🔑 Autenticación</div>
+
+      <!-- Register -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/accounts/register</span>
+          <span class="ep-desc">Crear cuenta nueva</span>
+        </div>
+        <div class="ep-body">
+          <div class="row">
+            <div class="field"><label>Email</label><input id="reg-email" value="nuevo@test.com"/></div>
+            <div class="field"><label>Password</label><input id="reg-pass" value="test1234"/></div>
+            <div class="field"><label>Rol</label>
+              <select id="reg-role" onchange="toggleRegRole()">
+                <option value="CLIENT">CLIENT</option>
+                <option value="PROFESSIONAL">PROFESSIONAL</option>
+              </select>
+            </div>
+          </div>
+          <div id="reg-client-fields">
+          <div class="row">
+            <div class="field"><label>Nombre</label><input id="reg-fname" value="Nuevo"/></div>
+            <div class="field"><label>Apellido</label><input id="reg-lname" value="Usuario"/></div>
+          </div>
+          </div>
+          <div id="reg-pro-fields" style="display:none">
+          <div class="row">
+            <div class="field"><label>Nombre</label><input id="reg-pro-fname" value="Nuevo"/></div>
+            <div class="field"><label>Apellido</label><input id="reg-pro-lname" value="Profesional"/></div>
+            <div class="field"><label>Ciudad</label><input id="reg-pro-city" value="Montevideo"/></div>
+          </div>
+          </div>
+          <button class="btn-run" onclick="runRegister()">▶ Ejecutar</button>
+          <div class="response" id="res-register"></div>
+        </div>
+      </div>
+
+      <!-- Login -->
+      <div class="ep open">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/accounts/login</span>
+          <span class="ep-desc">Iniciar sesión</span>
+        </div>
+        <div class="ep-body">
+          <div class="row">
+            <div class="field"><label>Email</label><input id="login-email" value="juan@test.com"/></div>
+            <div class="field"><label>Password</label><input id="login-pass" value="test1234"/></div>
+          </div>
+          <button class="btn-run" onclick="runLogin()">▶ Ejecutar</button>
+          <div class="response" id="res-login"></div>
+        </div>
+      </div>
+
+      <!-- Refresh -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/accounts/refresh</span>
+          <span class="ep-desc">Renovar tokens</span>
+        </div>
+        <div class="ep-body">
+          <p style="font-size:.75rem;color:var(--muted);margin-bottom:.5rem">Usa el refreshToken de la sesión actual automáticamente.</p>
+          <button class="btn-run" onclick="runRefresh()">▶ Ejecutar</button>
+          <div class="response" id="res-refresh"></div>
+        </div>
+      </div>
+
+      <!-- Logout -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/accounts/logout</span>
+          <span class="ep-desc">Cerrar sesión 🔒</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('POST','/accounts/logout',null,'res-logout')">▶ Ejecutar</button>
+          <div class="response" id="res-logout"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PROFESSIONALS ══════════════════════════════════════════════════ -->
+    <div id="mod-professionals" class="module">
+      <div class="mod-title">👷 Profesionales</div>
+
+      <!-- Search -->
+      <div class="ep open">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/professionals</span>
+          <span class="ep-desc">Buscar profesionales</span>
+        </div>
+        <div class="ep-body">
+          <div class="row">
+            <div class="field"><label>search</label><input id="pro-search" placeholder="ej: plomero"/></div>
+            <div class="field"><label>city</label><input id="pro-city" value="Montevideo"/></div>
+            <div class="field"><label>categoryId</label><input id="pro-cat" value="11111111-0000-0000-0000-000000000001"/></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>sortBy</label><select id="pro-sort"><option>rating</option><option>minPrice</option><option>createdAt</option></select></div>
+            <div class="field"><label>minRating</label><input id="pro-minrating" placeholder="ej: 4"/></div>
+            <div class="field"><label>availability</label><select id="pro-avail"><option value="">Todos</option><option>AVAILABLE</option><option>BUSY</option></select></div>
+          </div>
+          <div class="chips"><span class="chip-label">Categorías:</span>
+            <span class="chip" onclick="fill('pro-cat','11111111-0000-0000-0000-000000000001')">Plomería</span>
+            <span class="chip" onclick="fill('pro-cat','11111111-0000-0000-0000-000000000002')">Electricidad</span>
+            <span class="chip" onclick="fill('pro-cat','11111111-0000-0000-0000-000000000003')">Carpintería</span>
+            <span class="chip" onclick="fill('pro-cat','11111111-0000-0000-0000-000000000004')">Pintura</span>
+            <span class="chip" onclick="fill('pro-cat','11111111-0000-0000-0000-000000000005')">Albañilería</span>
+          </div>
+          <button class="btn-run" onclick="runSearchPros()">▶ Ejecutar</button>
+          <div class="response" id="res-pros"></div>
+        </div>
+      </div>
+
+      <!-- Get by slug -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/professionals/:slug</span>
+          <span class="ep-desc">Perfil público (incrementa vistas)</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Slugs:</span>
+            <span class="chip" onclick="fill('pro-slug','carlos-rodriguez')">carlos-rodriguez</span>
+            <span class="chip" onclick="fill('pro-slug','ana-martinez')">ana-martinez</span>
+            <span class="chip" onclick="fill('pro-slug','pablo-gonzalez')">pablo-gonzalez</span>
+            <span class="chip" onclick="fill('pro-slug','maria-lopez')">maria-lopez</span>
+            <span class="chip" onclick="fill('pro-slug','roberto-fernandez')">roberto-fernandez</span>
+          </div>
+          <div class="row">
+            <div class="field"><label>slug</label><input id="pro-slug" value="carlos-rodriguez"/></div>
+          </div>
+          <button class="btn-run" onclick="run('GET',`/professionals/${v('pro-slug')}`,null,'res-pro-slug')">▶ Ejecutar</button>
+          <div class="response" id="res-pro-slug"></div>
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/professionals/categories</span>
+          <span class="ep-desc">Listar categorías</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/professionals/categories',null,'res-cats')">▶ Ejecutar</button>
+          <div class="response" id="res-cats"></div>
+        </div>
+      </div>
+
+      <!-- Update profile -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method PUT">PUT</span><span class="ep-path">/professionals/:id</span>
+          <span class="ep-desc">Actualizar perfil propio 🔒 PROFESSIONAL</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">IDs:</span>
+            <span class="chip" onclick="fill('pro-upd-id','44444444-0000-0000-0000-000000000001')">Plomero</span>
+            <span class="chip" onclick="fill('pro-upd-id','44444444-0000-0000-0000-000000000002')">Electricista</span>
+          </div>
+          <div class="row">
+            <div class="field"><label>ID profesional</label><input id="pro-upd-id" value="44444444-0000-0000-0000-000000000001"/></div>
+            <div class="field"><label>availability</label><select id="pro-upd-avail"><option>AVAILABLE</option><option>BUSY</option><option>OFFLINE</option></select></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>bio</label><textarea id="pro-upd-bio">Plomero con 10 años de experiencia en Montevideo.</textarea></div>
+          </div>
+          <button class="btn-run" onclick="run('PUT',`/professionals/${v('pro-upd-id')}`,{bio:v('pro-upd-bio'),availability:v('pro-upd-avail')},'res-pro-upd')">▶ Ejecutar</button>
+          <div class="response" id="res-pro-upd"></div>
+        </div>
+      </div>
+
+      <!-- Schedule -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/professionals/:id/schedule</span>
+          <span class="ep-desc">Ver horario</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">IDs:</span>
+            <span class="chip" onclick="fill('sch-id','44444444-0000-0000-0000-000000000001')">Plomero</span>
+            <span class="chip" onclick="fill('sch-id','44444444-0000-0000-0000-000000000002')">Electricista</span>
+          </div>
+          <div class="row"><div class="field"><label>ID profesional</label><input id="sch-id" value="44444444-0000-0000-0000-000000000001"/></div></div>
+          <button class="btn-run" onclick="run('GET',`/professionals/${v('sch-id')}/schedule`,null,'res-schedule')">▶ Ejecutar</button>
+          <div class="response" id="res-schedule"></div>
+        </div>
+      </div>
+
+      <!-- Add review -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/professionals/:id/reviews</span>
+          <span class="ep-desc">Dejar reseña 🔒 CLIENT (necesita trabajo completado)</span>
+        </div>
+        <div class="ep-body">
+          <p style="font-size:.72rem;color:var(--yellow);margin-bottom:.5rem">⚠ Requiere haber tenido un trabajo COMPLETED con este profesional sin reseña previa.</p>
+          <div class="chips"><span class="chip-label">IDs:</span>
+            <span class="chip" onclick="fill('rev-pro-id','44444444-0000-0000-0000-000000000004')">Pintora</span>
+            <span class="chip" onclick="fill('rev-pro-id','44444444-0000-0000-0000-000000000005')">Albañil</span>
+          </div>
+          <div class="row">
+            <div class="field"><label>ID profesional</label><input id="rev-pro-id" value="44444444-0000-0000-0000-000000000004"/></div>
+            <div class="field"><label>rating (1-5)</label><input id="rev-rating" type="number" value="5" min="1" max="5"/></div>
+          </div>
+          <div class="row"><div class="field"><label>comment</label><textarea id="rev-comment">Excelente trabajo, muy prolija y puntual.</textarea></div></div>
+          <button class="btn-run" onclick="run('POST',`/professionals/${v('rev-pro-id')}/reviews`,{rating:+v('rev-rating'),comment:v('rev-comment')},'res-review')">▶ Ejecutar</button>
+          <div class="response" id="res-review"></div>
+        </div>
+      </div>
+
+      <!-- Add service -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/professionals/services</span>
+          <span class="ep-desc">Agregar servicio ofrecido 🔒 PROFESSIONAL</span>
+        </div>
+        <div class="ep-body">
+          <div class="row">
+            <div class="field"><label>name</label><input id="svc-name" value="Destape de cañerías"/></div>
+            <div class="field"><label>price</label><input id="svc-price" type="number" value="800"/></div>
+            <div class="field"><label>durationMinutes</label><input id="svc-dur" type="number" value="60"/></div>
+          </div>
+          <button class="btn-run" onclick="run('POST','/professionals/services',{name:v('svc-name'),price:+v('svc-price'),durationMinutes:+v('svc-dur')},'res-svc')">▶ Ejecutar</button>
+          <div class="response" id="res-svc"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ JOBS ═══════════════════════════════════════════════════════════ -->
+    <div id="mod-jobs" class="module">
+      <div class="mod-title">🔧 Trabajos</div>
+
+      <!-- Create job -->
+      <div class="ep open">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/jobs</span>
+          <span class="ep-desc">Contratar profesional 🔒 CLIENT</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Profesionales:</span>
+            <span class="chip" onclick="fill('job-pro','44444444-0000-0000-0000-000000000001')">Plomero</span>
+            <span class="chip" onclick="fill('job-pro','44444444-0000-0000-0000-000000000002')">Electricista</span>
+            <span class="chip" onclick="fill('job-pro','44444444-0000-0000-0000-000000000004')">Pintora</span>
+            <span class="chip" onclick="fill('job-pro','44444444-0000-0000-0000-000000000005')">Albañil</span>
+          </div>
+          <div class="row">
+            <div class="field"><label>professionalId</label><input id="job-pro" value="44444444-0000-0000-0000-000000000001"/></div>
+            <div class="field"><label>title</label><input id="job-title" value="Reparación de pérdida de agua"/></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>description</label><textarea id="job-desc">Tengo una pérdida bajo el lavabo del baño principal.</textarea></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>address</label><input id="job-addr" value="Av. Brasil 2145, Pocitos"/></div>
+            <div class="field"><label>budget</label><input id="job-budget" type="number" value="1500"/></div>
+            <div class="field"><label>scheduledAt (ISO)</label><input id="job-sched" value="2026-07-10T10:00:00.000Z"/></div>
+          </div>
+          <button class="btn-run" onclick="runCreateJob()">▶ Ejecutar</button>
+          <div class="response" id="res-job-create"></div>
+        </div>
+      </div>
+
+      <!-- My jobs -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/jobs/my</span>
+          <span class="ep-desc">Mis trabajos 🔒 CLIENT|PROFESSIONAL</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/jobs/my',null,'res-myjobs')">▶ Ejecutar</button>
+          <div class="response" id="res-myjobs"></div>
+        </div>
+      </div>
+
+      <!-- Update status -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method PATCH">PATCH</span><span class="ep-path">/jobs/:id/status</span>
+          <span class="ep-desc">Cambiar estado 🔒 PROFESSIONAL</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Jobs seeded:</span>
+            <span class="chip" onclick="fill('job-st-id','66666666-0000-0000-0000-000000000002')">JOB_2 (ACCEPTED→electricista)</span>
+            <span class="chip" onclick="fill('job-st-id','66666666-0000-0000-0000-000000000003')">JOB_3 (IN_PROGRESS→carpintero)</span>
+          </div>
+          <div class="row">
+            <div class="field"><label>job ID</label><input id="job-st-id" value="66666666-0000-0000-0000-000000000002"/></div>
+            <div class="field"><label>status</label>
+              <select id="job-st-status"><option>ACCEPTED</option><option>IN_PROGRESS</option><option>COMPLETED</option><option>CANCELED</option></select>
+            </div>
+          </div>
+          <button class="btn-run" onclick="run('PATCH',`/jobs/${v('job-st-id')}/status`,{status:v('job-st-status')},'res-job-st')">▶ Ejecutar</button>
+          <div class="response" id="res-job-st"></div>
+        </div>
+      </div>
+
+      <!-- Cancel -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method PATCH">PATCH</span><span class="ep-path">/jobs/:id/cancel</span>
+          <span class="ep-desc">Cancelar trabajo 🔒 CLIENT</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Job seeded:</span>
+            <span class="chip" onclick="fill('job-cancel-id','66666666-0000-0000-0000-000000000004')">JOB_4 (PENDING→pintora)</span>
+          </div>
+          <div class="row"><div class="field"><label>job ID</label><input id="job-cancel-id" value="66666666-0000-0000-0000-000000000004"/></div></div>
+          <button class="btn-run" onclick="run('PATCH',`/jobs/${v('job-cancel-id')}/cancel`,null,'res-job-cancel')">▶ Ejecutar</button>
+          <div class="response" id="res-job-cancel"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ QUOTES ══════════════════════════════════════════════════════════ -->
+    <div id="mod-quotes" class="module">
+      <div class="mod-title">💰 Solicitudes de presupuesto</div>
+
+      <!-- List -->
+      <div class="ep open">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/quote-requests</span>
+          <span class="ep-desc">Solicitudes abiertas (público)</span>
+        </div>
+        <div class="ep-body">
+          <div class="row">
+            <div class="field"><label>city</label><input id="qr-city" value="Montevideo"/></div>
+            <div class="field"><label>categoryId</label><input id="qr-cat" value=""/></div>
+          </div>
+          <button class="btn-run" onclick="run('GET',`/quote-requests?city=${v('qr-city')}&categoryId=${v('qr-cat')}`,null,'res-qr-list')">▶ Ejecutar</button>
+          <div class="response" id="res-qr-list"></div>
+        </div>
+      </div>
+
+      <!-- Create -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/quote-requests</span>
+          <span class="ep-desc">Crear solicitud 🔒 CLIENT</span>
+        </div>
+        <div class="ep-body">
+          <div class="row">
+            <div class="field"><label>title</label><input id="qr-title" value="Necesito pintar mi apartamento"/></div>
+            <div class="field"><label>city</label><input id="qr-city2" value="Montevideo"/></div>
+            <div class="field"><label>budget</label><input id="qr-budget" type="number" value="8000"/></div>
+          </div>
+          <div class="row"><div class="field"><label>description</label><textarea id="qr-desc">Apartamento de 2 dormitorios, living y cocina. Paredes y cielorraso. Pintura lavable color blanco.</textarea></div></div>
+          <div class="row">
+            <div class="field"><label>categoryId</label><input id="qr-catid" value="11111111-0000-0000-0000-000000000004"/></div>
+          </div>
+          <button class="btn-run" onclick="run('POST','/quote-requests',{title:v('qr-title'),description:v('qr-desc'),city:v('qr-city2'),budget:+v('qr-budget'),categoryId:v('qr-catid')||undefined},'res-qr-create')">▶ Ejecutar</button>
+          <div class="response" id="res-qr-create"></div>
+        </div>
+      </div>
+
+      <!-- My requests -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/quote-requests/my</span>
+          <span class="ep-desc">Mis solicitudes con ofertas 🔒 CLIENT</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/quote-requests/my',null,'res-qr-my')">▶ Ejecutar</button>
+          <div class="response" id="res-qr-my"></div>
+        </div>
+      </div>
+
+      <!-- Send offer -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/quote-requests/:id/offers</span>
+          <span class="ep-desc">Enviar presupuesto 🔒 PROFESSIONAL</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Solicitudes seeded:</span>
+            <span class="chip" onclick="fill('qr-offer-id','77777777-0000-0000-0000-000000000001')">QR_1 (Pérdida azotea)</span>
+            <span class="chip" onclick="fill('qr-offer-id','77777777-0000-0000-0000-000000000002')">QR_2 (Reforma baño)</span>
+          </div>
+          <div class="row">
+            <div class="field"><label>quoteRequest ID</label><input id="qr-offer-id" value="77777777-0000-0000-0000-000000000001"/></div>
+            <div class="field"><label>price</label><input id="qr-offer-price" type="number" value="3500"/></div>
+            <div class="field"><label>estimatedDays</label><input id="qr-offer-days" type="number" value="2"/></div>
+          </div>
+          <div class="row"><div class="field"><label>description</label><textarea id="qr-offer-desc">Puedo ir el jueves. El precio incluye materiales y mano de obra.</textarea></div></div>
+          <button class="btn-run" onclick="run('POST',`/quote-requests/${v('qr-offer-id')}/offers`,{price:+v('qr-offer-price'),description:v('qr-offer-desc'),estimatedDays:+v('qr-offer-days')},'res-qr-offer')">▶ Ejecutar</button>
+          <div class="response" id="res-qr-offer"></div>
+        </div>
+      </div>
+
+      <!-- Accept offer -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method PATCH">PATCH</span><span class="ep-path">/quote-requests/:id/offers/:offerId/accept</span>
+          <span class="ep-desc">Aceptar oferta 🔒 CLIENT</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Seeded:</span>
+            <span class="chip" onclick="fill('qr-acc-id','77777777-0000-0000-0000-000000000001');fill('qr-acc-offer','aaaaaaaa-0000-0000-0000-000000000001')">QR_1 + Oferta Plomero</span>
+          </div>
+          <div class="row">
+            <div class="field"><label>quoteRequest ID</label><input id="qr-acc-id" value="77777777-0000-0000-0000-000000000001"/></div>
+            <div class="field"><label>offer ID</label><input id="qr-acc-offer" value="aaaaaaaa-0000-0000-0000-000000000001"/></div>
+          </div>
+          <button class="btn-run" onclick="run('PATCH',`/quote-requests/${v('qr-acc-id')}/offers/${v('qr-acc-offer')}/accept`,null,'res-qr-acc')">▶ Ejecutar</button>
+          <div class="response" id="res-qr-acc"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ APPOINTMENTS ════════════════════════════════════════════════════ -->
+    <div id="mod-appointments" class="module">
+      <div class="mod-title">📅 Citas / Agenda</div>
+
+      <!-- Create -->
+      <div class="ep open">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/appointments</span>
+          <span class="ep-desc">Agendar cita 🔒 CLIENT</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Profesionales:</span>
+            <span class="chip" onclick="fill('apt-pro','44444444-0000-0000-0000-000000000004')">Pintora</span>
+            <span class="chip" onclick="fill('apt-pro','44444444-0000-0000-0000-000000000005')">Albañil</span>
+          </div>
+          <div class="row">
+            <div class="field"><label>professionalId</label><input id="apt-pro" value="44444444-0000-0000-0000-000000000004"/></div>
+            <div class="field"><label>scheduledAt (ISO)</label><input id="apt-date" value="2026-07-15T10:00:00.000Z"/></div>
+            <div class="field"><label>durationMinutes</label><input id="apt-dur" type="number" value="120"/></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>address</label><input id="apt-addr" value="Bulevar Artigas 1234, Punta Carretas"/></div>
+            <div class="field"><label>notes</label><input id="apt-notes" value="Llamar 10 min antes"/></div>
+          </div>
+          <button class="btn-run" onclick="run('POST','/appointments',{professionalId:v('apt-pro'),scheduledAt:v('apt-date'),durationMinutes:+v('apt-dur'),address:v('apt-addr'),notes:v('apt-notes')},'res-apt-create')">▶ Ejecutar</button>
+          <div class="response" id="res-apt-create"></div>
+        </div>
+      </div>
+
+      <!-- My appointments -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/appointments/my</span>
+          <span class="ep-desc">Mis citas 🔒</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/appointments/my',null,'res-apt-my')">▶ Ejecutar</button>
+          <div class="response" id="res-apt-my"></div>
+        </div>
+      </div>
+
+      <!-- Confirm -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method PATCH">PATCH</span><span class="ep-path">/appointments/:id/confirm</span>
+          <span class="ep-desc">Confirmar cita 🔒 PROFESSIONAL</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Seeded:</span>
+            <span class="chip" onclick="fill('apt-conf-id','bbbbbbbb-0000-0000-0000-000000000002')">APT_2 (Pintora, PENDING)</span>
+          </div>
+          <div class="row"><div class="field"><label>appointment ID</label><input id="apt-conf-id" value="bbbbbbbb-0000-0000-0000-000000000002"/></div></div>
+          <button class="btn-run" onclick="run('PATCH',`/appointments/${v('apt-conf-id')}/confirm`,null,'res-apt-conf')">▶ Ejecutar</button>
+          <div class="response" id="res-apt-conf"></div>
+        </div>
+      </div>
+
+      <!-- Cancel -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method PATCH">PATCH</span><span class="ep-path">/appointments/:id/cancel</span>
+          <span class="ep-desc">Cancelar cita 🔒</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Seeded:</span>
+            <span class="chip" onclick="fill('apt-cancel-id','bbbbbbbb-0000-0000-0000-000000000001')">APT_1 (Electricista)</span>
+          </div>
+          <div class="row"><div class="field"><label>appointment ID</label><input id="apt-cancel-id" value="bbbbbbbb-0000-0000-0000-000000000001"/></div></div>
+          <button class="btn-run" onclick="run('PATCH',`/appointments/${v('apt-cancel-id')}/cancel`,null,'res-apt-cancel')">▶ Ejecutar</button>
+          <div class="response" id="res-apt-cancel"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CHAT ════════════════════════════════════════════════════════════ -->
+    <div id="mod-chat" class="module">
+      <div class="mod-title">💬 Chat</div>
+
+      <!-- My convs -->
+      <div class="ep open">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/chat/conversations</span>
+          <span class="ep-desc">Mis conversaciones 🔒</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/chat/conversations',null,'res-chat-convs')">▶ Ejecutar</button>
+          <div class="response" id="res-chat-convs"></div>
+        </div>
+      </div>
+
+      <!-- Start conversation -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/chat/conversations</span>
+          <span class="ep-desc">Iniciar conversación 🔒</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">IDs de cuenta profesional:</span>
+            <span class="chip" onclick="fill('chat-pro-acc','22222222-0000-0000-0000-000000000004')">Plomero</span>
+            <span class="chip" onclick="fill('chat-pro-acc','22222222-0000-0000-0000-000000000005')">Electricista</span>
+          </div>
+          <p style="font-size:.72rem;color:var(--muted);margin-bottom:.5rem">Si sos CLIENT, provee professionalAccountId. Si sos PROFESSIONAL, provee clientAccountId.</p>
+          <div class="row"><div class="field"><label>professionalAccountId</label><input id="chat-pro-acc" value="22222222-0000-0000-0000-000000000004"/></div></div>
+          <button class="btn-run" onclick="run('POST',`/chat/conversations?professionalAccountId=${v('chat-pro-acc')}`,null,'res-chat-start')">▶ Ejecutar</button>
+          <div class="response" id="res-chat-start"></div>
+        </div>
+      </div>
+
+      <!-- Get messages -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/chat/conversations/:id/messages</span>
+          <span class="ep-desc">Mensajes de una conversación 🔒</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Seeded:</span>
+            <span class="chip" onclick="fill('chat-conv-id','cccccccc-0000-0000-0000-000000000001')">CONV_1 (Juan ↔ Plomero)</span>
+            <span class="chip" onclick="fill('chat-conv-id','cccccccc-0000-0000-0000-000000000002')">CONV_2 (Juan ↔ Electricista)</span>
+          </div>
+          <div class="row"><div class="field"><label>conversation ID</label><input id="chat-conv-id" value="cccccccc-0000-0000-0000-000000000001"/></div></div>
+          <button class="btn-run" onclick="run('GET',`/chat/conversations/${v('chat-conv-id')}/messages`,null,'res-chat-msgs')">▶ Ejecutar</button>
+          <div class="response" id="res-chat-msgs"></div>
+        </div>
+      </div>
+
+      <!-- Send message -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/chat/conversations/:id/messages</span>
+          <span class="ep-desc">Enviar mensaje 🔒</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Seeded:</span>
+            <span class="chip" onclick="fill('chat-send-id','cccccccc-0000-0000-0000-000000000001')">CONV_1</span>
+            <span class="chip" onclick="fill('chat-send-id','cccccccc-0000-0000-0000-000000000002')">CONV_2</span>
+          </div>
+          <div class="row">
+            <div class="field"><label>conversation ID</label><input id="chat-send-id" value="cccccccc-0000-0000-0000-000000000001"/></div>
+            <div class="field"><label>type</label><select id="chat-type"><option>TEXT</option><option>IMAGE</option><option>LOCATION</option></select></div>
+          </div>
+          <div class="row"><div class="field"><label>content</label><input id="chat-msg" value="Hola, ¿podés venir esta semana?"/></div></div>
+          <button class="btn-run" onclick="run('POST',`/chat/conversations/${v('chat-send-id')}/messages`,{content:v('chat-msg'),type:v('chat-type')},'res-chat-send')">▶ Ejecutar</button>
+          <div class="response" id="res-chat-send"></div>
+        </div>
+      </div>
+
+      <!-- Unread count -->
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/chat/unread-count</span>
+          <span class="ep-desc">Mensajes sin leer 🔒</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/chat/unread-count',null,'res-chat-unread')">▶ Ejecutar</button>
+          <div class="response" id="res-chat-unread"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ NOTIFICATIONS ══════════════════════════════════════════════════ -->
+    <div id="mod-notifications" class="module">
+      <div class="mod-title">🔔 Notificaciones</div>
+
+      <div class="ep open">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/notifications</span>
+          <span class="ep-desc">Mis notificaciones 🔒</span>
+        </div>
+        <div class="ep-body">
+          <div class="row"><div class="field"><label>unread only</label><select id="notif-unread"><option value="">Todas</option><option value="true">Solo no leídas</option></select></div></div>
+          <button class="btn-run" onclick="run('GET',`/notifications${v('notif-unread')?'?unread=true':''}`,null,'res-notifs')">▶ Ejecutar</button>
+          <div class="response" id="res-notifs"></div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/notifications/unread-count</span>
+          <span class="ep-desc">Contador no leídas 🔒</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/notifications/unread-count',null,'res-notif-count')">▶ Ejecutar</button>
+          <div class="response" id="res-notif-count"></div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method PATCH">PATCH</span><span class="ep-path">/notifications/read-all</span>
+          <span class="ep-desc">Marcar todas como leídas 🔒</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('PATCH','/notifications/read-all',null,'res-notif-readall')">▶ Ejecutar</button>
+          <div class="response" id="res-notif-readall"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SUBSCRIPTIONS ══════════════════════════════════════════════════ -->
+    <div id="mod-subscriptions" class="module">
+      <div class="mod-title">⭐ Suscripciones</div>
+
+      <div class="ep open">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/subscriptions/plans</span>
+          <span class="ep-desc">Planes disponibles (público)</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/subscriptions/plans',null,'res-plans')">▶ Ejecutar</button>
+          <div class="response" id="res-plans"></div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/subscriptions/subscribe</span>
+          <span class="ep-desc">Suscribirse a un plan 🔒 PROFESSIONAL</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Planes:</span>
+            <span class="chip" onclick="fill('sub-plan','55555555-0000-0000-0000-000000000001')">Free</span>
+            <span class="chip" onclick="fill('sub-plan','55555555-0000-0000-0000-000000000002')">Premium</span>
+          </div>
+          <div class="row"><div class="field"><label>planId</label><input id="sub-plan" value="55555555-0000-0000-0000-000000000002"/></div></div>
+          <button class="btn-run" onclick="run('POST','/subscriptions/subscribe',{planId:v('sub-plan')},'res-sub-create')">▶ Ejecutar</button>
+          <div class="response" id="res-sub-create"></div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/subscriptions/my</span>
+          <span class="ep-desc">Mi suscripción activa 🔒 PROFESSIONAL</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/subscriptions/my',null,'res-sub-my')">▶ Ejecutar</button>
+          <div class="response" id="res-sub-my"></div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method DELETE">DELETE</span><span class="ep-path">/subscriptions/cancel</span>
+          <span class="ep-desc">Cancelar suscripción 🔒 PROFESSIONAL</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('DELETE','/subscriptions/cancel',null,'res-sub-cancel')">▶ Ejecutar</button>
+          <div class="response" id="res-sub-cancel"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAYMENTS ════════════════════════════════════════════════════════ -->
+    <div id="mod-payments" class="module">
+      <div class="mod-title">💳 Pagos</div>
+
+      <div class="ep open">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/payments/my</span>
+          <span class="ep-desc">Mis pagos 🔒</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/payments/my',null,'res-pay-my')">▶ Ejecutar</button>
+          <div class="response" id="res-pay-my"></div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/payments/earnings</span>
+          <span class="ep-desc">Resumen de ingresos 🔒 PROFESSIONAL</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/payments/earnings',null,'res-pay-earnings')">▶ Ejecutar</button>
+          <div class="response" id="res-pay-earnings"></div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method POST">POST</span><span class="ep-path">/payments</span>
+          <span class="ep-desc">Registrar pago 🔒</span>
+        </div>
+        <div class="ep-body">
+          <div class="row">
+            <div class="field"><label>amount (UYU)</label><input id="pay-amount" type="number" value="590"/></div>
+            <div class="field"><label>method</label><select id="pay-method"><option>CARD</option><option>MERCADO_PAGO</option><option>TRANSFER</option></select></div>
+            <div class="field"><label>subscriptionId (opcional)</label><input id="pay-sub" value=""/></div>
+          </div>
+          <button class="btn-run" onclick="run('POST','/payments',{amount:+v('pay-amount'),method:v('pay-method'),subscriptionId:v('pay-sub')||undefined},'res-pay-create')">▶ Ejecutar</button>
+          <div class="response" id="res-pay-create"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STATS ═══════════════════════════════════════════════════════════ -->
+    <div id="mod-stats" class="module">
+      <div class="mod-title">📊 Estadísticas</div>
+
+      <div class="ep open">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/stats</span>
+          <span class="ep-desc">Mis estadísticas 🔒 PROFESSIONAL</span>
+        </div>
+        <div class="ep-body">
+          <p style="font-size:.72rem;color:var(--muted);margin-bottom:.5rem">Loguéate como Carlos (Plomero) para ver estadísticas con datos.</p>
+          <button class="btn-run" onclick="run('GET','/stats',null,'res-stats')">▶ Ejecutar</button>
+          <div class="response" id="res-stats"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ADMIN ═══════════════════════════════════════════════════════════ -->
+    <div id="mod-admin" class="module">
+      <div class="mod-title">🛡️ Admin Panel</div>
+      <p style="font-size:.75rem;color:var(--yellow);margin-bottom:1rem">⚠ Todos los endpoints requieren rol ADMIN. Loguéate con admin@servynow.com / admin1234</p>
+
+      <div class="ep open">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/admin/dashboard</span>
+          <span class="ep-desc">Dashboard general</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/admin/dashboard',null,'res-adm-dash')">▶ Ejecutar</button>
+          <div class="response" id="res-adm-dash"></div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/admin/professionals</span>
+          <span class="ep-desc">Listar profesionales</span>
+        </div>
+        <div class="ep-body">
+          <div class="row">
+            <div class="field"><label>verificationStatus</label><select id="adm-vs"><option value="">Todos</option><option>PENDING</option><option>VERIFIED</option><option>REJECTED</option></select></div>
+          </div>
+          <button class="btn-run" onclick="run('GET',`/admin/professionals${v('adm-vs')?'?verificationStatus='+v('adm-vs'):''}`,null,'res-adm-pros')">▶ Ejecutar</button>
+          <div class="response" id="res-adm-pros"></div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method PATCH">PATCH</span><span class="ep-path">/admin/professionals/:id/verify</span>
+          <span class="ep-desc">Verificar/rechazar profesional</span>
+        </div>
+        <div class="ep-body">
+          <div class="chips"><span class="chip-label">Seeded:</span>
+            <span class="chip" onclick="fill('adm-ver-id','44444444-0000-0000-0000-000000000004')">Pintora (PENDING)</span>
+          </div>
+          <div class="row">
+            <div class="field"><label>professional ID</label><input id="adm-ver-id" value="44444444-0000-0000-0000-000000000004"/></div>
+            <div class="field"><label>status</label><select id="adm-ver-st"><option>VERIFIED</option><option>REJECTED</option></select></div>
+          </div>
+          <button class="btn-run" onclick="run('PATCH',`/admin/professionals/${v('adm-ver-id')}/verify?status=${v('adm-ver-st')}`,null,'res-adm-ver')">▶ Ejecutar</button>
+          <div class="response" id="res-adm-ver"></div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/admin/review-reports</span>
+          <span class="ep-desc">Reportes de reseñas</span>
+        </div>
+        <div class="ep-body">
+          <button class="btn-run" onclick="run('GET','/admin/review-reports?status=OPEN',null,'res-adm-reports')">▶ Ejecutar</button>
+          <div class="response" id="res-adm-reports"></div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div class="ep-head" onclick="toggle(this)">
+          <span class="method GET">GET</span><span class="ep-path">/admin/accounts</span>
+          <span class="ep-desc">Listar cuentas</span>
+        </div>
+        <div class="ep-body">
+          <div class="row">
+            <div class="field"><label>role</label><select id="adm-role"><option value="">Todos</option><option>USER</option><option>PROFESSIONAL</option><option>ADMIN</option></select></div>
+          </div>
+          <button class="btn-run" onclick="run('GET',`/admin/accounts${v('adm-role')?'?role='+v('adm-role'):''}`,null,'res-adm-accounts')">▶ Ejecutar</button>
+          <div class="response" id="res-adm-accounts"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+const BASE = '/api';
+let session = JSON.parse(localStorage.getItem('srv_session') || 'null');
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const v = id => document.getElementById(id)?.value || '';
+const fill = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+
+function showMod(name) {
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mod-'+name)?.classList.add('active');
+  event.currentTarget?.classList.add('active');
+}
+
+function toggle(head) {
+  head.closest('.ep').classList.toggle('open');
+}
+
+function updateTopbar() {
+  const el = document.getElementById('token-status');
+  const pills = document.querySelectorAll('.user-pill');
+  pills.forEach(p => p.classList.remove('active'));
+  if (session) {
+    const exp = session.exp ? new Date(session.exp * 1000).toLocaleTimeString('es-UY') : '?';
+    el.innerHTML = `Sesión: <span>${session.name}</span> (${session.role}) · expira ${exp}`;
+  } else {
+    el.textContent = 'Sin sesión';
+  }
+}
+
+async function apiCall(method, path, body) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (session?.accessToken) headers['Authorization'] = 'Bearer ' + session.accessToken;
+
+  const opts = { method, headers };
+  if (body && method !== 'GET') opts.body = JSON.stringify(body);
+
+  const res = await fetch(BASE + path, opts);
+  let data;
+  try { data = await res.json(); } catch { data = { raw: await res.text() }; }
+  return { status: res.status, data };
+}
+
+function renderResponse(elId, status, data) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const cls = status >= 500 ? 's5xx' : status >= 400 ? 's4xx' : 's2xx';
+  el.innerHTML = `
+    <div class="res-head">
+      <span class="res-status ${cls}">${status}</span>
+      <span style="color:var(--muted)">${new Date().toLocaleTimeString('es-UY')}</span>
+    </div>
+    <div class="res-body">${highlight(JSON.stringify(data, null, 2))}</div>`;
+}
+
+function highlight(json) {
+  return json
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m => {
+      if (/^"/.test(m)) return /:$/.test(m) ? `<span class="jk">${m}</span>` : `<span class="js">${m}</span>`;
+      if (/true|false/.test(m)) return `<span class="jb">${m}</span>`;
+      if (/null/.test(m)) return `<span class="jp">${m}</span>`;
+      return `<span class="jn">${m}</span>`;
+    });
+}
+
+async function run(method, path, body, resId) {
+  const r = await apiCall(method, path, body);
+  renderResponse(resId, r.status, r.data);
+  return r;
+}
+
+// ── Auth actions ───────────────────────────────────────────────────────────
+async function quickLogin(email, pass, role, name) {
+  const r = await apiCall('POST', '/accounts/login', { email, password: pass });
+  if (r.status === 200 && r.data.tokens) {
+    const payload = JSON.parse(atob(r.data.tokens.accessToken.split('.')[1]));
+    session = { ...r.data.tokens, name, role, exp: payload.exp };
+    localStorage.setItem('srv_session', JSON.stringify(session));
+    updateTopbar();
+    document.querySelectorAll('.user-pill').forEach(p => {
+      if (p.textContent.includes(email.split('@')[0]) || p.textContent.includes(name.split(' ')[0])) p.classList.add('active');
+    });
+  }
+}
+
+async function runLogin() {
+  const r = await run('POST', '/accounts/login', { email: v('login-email'), password: v('login-pass') }, 'res-login');
+  if (r.data.tokens) {
+    const payload = JSON.parse(atob(r.data.tokens.accessToken.split('.')[1]));
+    session = { ...r.data.tokens, name: v('login-email'), role: r.data.role, exp: payload.exp };
+    localStorage.setItem('srv_session', JSON.stringify(session));
+    updateTopbar();
+  }
+}
+
+async function runRefresh() {
+  if (!session?.refreshToken) { alert('No hay sesión activa'); return; }
+  const r = await run('POST', '/accounts/refresh', { refreshToken: session.refreshToken }, 'res-refresh');
+  if (r.data.tokens) {
+    const payload = JSON.parse(atob(r.data.tokens.accessToken.split('.')[1]));
+    session = { ...session, ...r.data.tokens, exp: payload.exp };
+    localStorage.setItem('srv_session', JSON.stringify(session));
+    updateTopbar();
+  }
+}
+
+function logout() {
+  run('POST', '/accounts/logout', null, 'res-logout');
+  session = null;
+  localStorage.removeItem('srv_session');
+  updateTopbar();
+  document.querySelectorAll('.user-pill').forEach(p => p.classList.remove('active'));
+}
+
+async function runRegister() {
+  const role = v('reg-role');
+  const body = {
+    email: v('reg-email'),
+    password: v('reg-pass'),
+    role,
+    ...(role === 'CLIENT' ? { user: { firstName: v('reg-fname'), lastName: v('reg-lname') } } : {}),
+    ...(role === 'PROFESSIONAL' ? { professional: { firstName: v('reg-pro-fname'), lastName: v('reg-pro-lname'), city: v('reg-pro-city') } } : {}),
+  };
+  await run('POST', '/accounts/register', body, 'res-register');
+}
+
+function toggleRegRole() {
+  const r = v('reg-role');
+  document.getElementById('reg-client-fields').style.display = r === 'CLIENT' ? '' : 'none';
+  document.getElementById('reg-pro-fields').style.display = r === 'PROFESSIONAL' ? '' : 'none';
+}
+
+async function runSearchPros() {
+  const params = new URLSearchParams();
+  if (v('pro-search')) params.set('search', v('pro-search'));
+  if (v('pro-city')) params.set('city', v('pro-city'));
+  if (v('pro-cat')) params.set('categoryId', v('pro-cat'));
+  if (v('pro-sort')) params.set('sortBy', v('pro-sort'));
+  if (v('pro-minrating')) params.set('minRating', v('pro-minrating'));
+  if (v('pro-avail')) params.set('availability', v('pro-avail'));
+  await run('GET', '/professionals?' + params.toString(), null, 'res-pros');
+}
+
+async function runCreateJob() {
+  const body = {
+    professionalId: v('job-pro'),
+    title: v('job-title'),
+    description: v('job-desc'),
+    address: v('job-addr'),
+    budget: +v('job-budget'),
+    scheduledAt: v('job-sched') || undefined,
+  };
+  await run('POST', '/jobs', body, 'res-job-create');
+}
+
+// Init
+updateTopbar();
+</script>
+</body>
+</html>

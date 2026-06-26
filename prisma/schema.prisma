@@ -7,27 +7,475 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model professional {
+// ─── ACCOUNT ────────────────────────────────────────────────────────────────
+
+model account {
+  id                    String       @id @db.Char(36)
+  email                 String       @unique(map: "email") @db.VarChar(255)
+  password              String       @db.VarChar(255)
+  refreshTokenHash      String?      @db.VarChar(255)
+  role                  account_role
+  isEmailVerified       Boolean      @default(false)
+  emailVerifyToken      String?      @db.VarChar(255)
+  resetPasswordToken    String?      @db.VarChar(255)
+  resetPasswordExpires  DateTime?    @db.DateTime(0)
+  createdAt             DateTime     @default(now()) @db.DateTime(0)
+  updatedAt             DateTime     @default(now()) @db.DateTime(0)
+}
+
+// ─── USER (CLIENT) ──────────────────────────────────────────────────────────
+
+model user {
   id          String   @id @db.Char(36)
   firstName   String   @db.VarChar(255)
   lastName    String   @db.VarChar(255)
-  email       String   @unique(map: "email") @db.VarChar(255)
   phoneNumber String?  @db.VarChar(50)
-  bio         String?  @db.Text
-  rating      Float    @default(0) @db.Float
+  avatarUrl   String?  @db.VarChar(500)
+  address     String?  @db.VarChar(500)
   createdAt   DateTime @default(now()) @db.DateTime(0)
   updatedAt   DateTime @default(now()) @db.DateTime(0)
-  review      review[]
+  slug        String   @unique(map: "user_unique") @db.VarChar(100)
+  account_id  String   @unique(map: "user_unique_1") @db.VarChar(36)
 }
 
-model review {
+// ─── PROFESSIONAL ───────────────────────────────────────────────────────────
+
+model professional {
+  id                 String                    @id @db.Char(36)
+  firstName          String                    @db.VarChar(255)
+  lastName           String                    @db.VarChar(255)
+  phoneNumber        String?                   @db.VarChar(50)
+  bio                String?                   @db.Text
+  avatarUrl          String?                   @db.VarChar(500)
+  coverPhotoUrl      String?                   @db.VarChar(500)
+  rating             Float                     @default(0) @db.Float
+  city               String?                   @db.VarChar(120)
+  zone               String?                   @db.VarChar(120)
+  minPrice           Float?                    @db.Float
+  maxPrice           Float?                    @db.Float
+  yearsExperience    Int?                      @default(0)
+  availability       professional_availability @default(AVAILABLE)
+  status             professional_status       @default(ACTIVE)
+  verificationStatus verification_status       @default(PENDING)
+  isProfilePublic    Boolean                   @default(true)
+  profileViews       Int                       @default(0)
+  contactCount       Int                       @default(0)
+  createdAt          DateTime                  @default(now()) @db.DateTime(0)
+  updatedAt          DateTime                  @default(now()) @db.DateTime(0)
+  slug               String                    @unique(map: "professional_unique") @db.VarChar(100)
+  account_id         String                    @unique(map: "professional_unique_1") @db.VarChar(36)
+  review             review[]
+  categories         professional_category[]
+  jobs               service_job[]
+  photos             professional_photo[]
+  certifications     professional_certification[]
+  services           professional_service[]
+  schedule           professional_schedule[]
+  quoteOffers        quote_offer[]
+  appointments       appointment[]
+  subscriptions      subscription[]
+}
+
+model professional_photo {
+  id             String                   @id @db.Char(36)
+  professionalId String                   @db.Char(36)
+  url            String                   @db.VarChar(500)
+  caption        String?                  @db.VarChar(255)
+  type           professional_photo_type  @default(PORTFOLIO)
+  createdAt      DateTime                 @default(now()) @db.DateTime(0)
+  professional   professional             @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId], map: "idx_photo_professional")
+}
+
+model professional_certification {
   id             String       @id @db.Char(36)
   professionalId String       @db.Char(36)
-  reviewerName   String       @db.VarChar(255)
-  rating         Float        @db.Float
-  comment        String?      @db.Text
+  title          String       @db.VarChar(255)
+  issuer         String?      @db.VarChar(255)
+  issuedAt       DateTime?    @db.DateTime(0)
+  expiresAt      DateTime?    @db.DateTime(0)
+  documentUrl    String?      @db.VarChar(500)
   createdAt      DateTime     @default(now()) @db.DateTime(0)
-  professional   professional @relation(fields: [professionalId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_professional")
+  professional   professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId], map: "idx_cert_professional")
+}
+
+model professional_service {
+  id              String       @id @db.Char(36)
+  professionalId  String       @db.Char(36)
+  name            String       @db.VarChar(255)
+  description     String?      @db.Text
+  price           Float?       @db.Float
+  durationMinutes Int?
+  createdAt       DateTime     @default(now()) @db.DateTime(0)
+  professional    professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId], map: "idx_service_professional")
+}
+
+model professional_schedule {
+  id             String       @id @db.Char(36)
+  professionalId String       @db.Char(36)
+  dayOfWeek      Int          // 0=Sunday ... 6=Saturday
+  startTime      String       @db.VarChar(5)  // "09:00"
+  endTime        String       @db.VarChar(5)  // "18:00"
+  isAvailable    Boolean      @default(true)
+  professional   professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([professionalId, dayOfWeek], map: "uniq_schedule_day")
+  @@index([professionalId], map: "idx_schedule_professional")
+}
+
+// ─── CATEGORIES ─────────────────────────────────────────────────────────────
+
+model category {
+  id             String                  @id @db.Char(36)
+  name           String                  @unique @db.VarChar(100)
+  slug           String                  @unique @db.VarChar(120)
+  createdAt      DateTime                @default(now()) @db.DateTime(0)
+  updatedAt      DateTime                @default(now()) @db.DateTime(0)
+  professionals  professional_category[]
+  quoteRequests  quote_request[]
+}
+
+model professional_category {
+  professionalId String       @db.Char(36)
+  categoryId     String       @db.Char(36)
+  professional   professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  category       category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([professionalId, categoryId])
+  @@index([categoryId], map: "idx_prof_category_category")
+}
+
+// ─── JOBS ────────────────────────────────────────────────────────────────────
+
+model service_job {
+  id              String             @id @db.Char(36)
+  clientAccountId String             @db.Char(36)
+  professionalId  String             @db.Char(36)
+  title           String?            @db.VarChar(255)
+  description     String?            @db.Text
+  address         String?            @db.VarChar(500)
+  budget          Float?             @db.Float
+  scheduledAt     DateTime?          @db.DateTime(0)
+  status          service_job_status @default(PENDING)
+  createdAt       DateTime           @default(now()) @db.DateTime(0)
+  updatedAt       DateTime           @default(now()) @db.DateTime(0)
+  completedAt     DateTime?          @db.DateTime(0)
+  professional    professional       @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  review          review?
+
+  @@index([professionalId], map: "idx_job_professional")
+  @@index([clientAccountId], map: "idx_job_client")
+  @@index([status], map: "idx_job_status")
+}
+
+// ─── REVIEWS ────────────────────────────────────────────────────────────────
+
+model review {
+  id                String        @id @db.Char(36)
+  professionalId    String        @db.Char(36)
+  reviewerAccountId String?       @db.Char(36)
+  serviceJobId      String?       @unique @db.Char(36)
+  reviewerName      String        @db.VarChar(255)
+  rating            Float         @db.Float
+  comment           String?       @db.Text
+  status            review_status @default(VISIBLE)
+  createdAt         DateTime      @default(now()) @db.DateTime(0)
+  professional      professional  @relation(fields: [professionalId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_professional")
+  serviceJob        service_job?  @relation(fields: [serviceJobId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_review_service_job")
+  reports           review_report[]
+  photos            review_photo[]
 
   @@index([professionalId], map: "fk_professional")
+  @@index([reviewerAccountId], map: "idx_review_reviewer")
+}
+
+model review_report {
+  id                String             @id @db.Char(36)
+  reviewId          String             @db.Char(36)
+  reporterAccountId String             @db.Char(36)
+  reason            String             @db.Text
+  status            review_report_status @default(OPEN)
+  createdAt         DateTime           @default(now()) @db.DateTime(0)
+  updatedAt         DateTime           @default(now()) @db.DateTime(0)
+  review            review             @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, reporterAccountId], map: "uniq_review_reporter")
+  @@index([status], map: "idx_report_status")
+}
+
+model review_photo {
+  id        String   @id @db.Char(36)
+  reviewId  String   @db.Char(36)
+  url       String   @db.VarChar(500)
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  review    review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId], map: "idx_review_photo_review")
+}
+
+// ─── QUOTE REQUESTS (PRESUPUESTOS) ──────────────────────────────────────────
+
+model quote_request {
+  id              String               @id @db.Char(36)
+  clientAccountId String               @db.Char(36)
+  categoryId      String?              @db.Char(36)
+  title           String               @db.VarChar(255)
+  description     String               @db.Text
+  city            String?              @db.VarChar(120)
+  budget          Float?               @db.Float
+  status          quote_request_status @default(OPEN)
+  expiresAt       DateTime?            @db.DateTime(0)
+  createdAt       DateTime             @default(now()) @db.DateTime(0)
+  updatedAt       DateTime             @default(now()) @db.DateTime(0)
+  offers          quote_offer[]
+  category        category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([clientAccountId], map: "idx_quote_client")
+  @@index([categoryId], map: "idx_quote_category")
+  @@index([status], map: "idx_quote_status")
+}
+
+model quote_offer {
+  id             String             @id @db.Char(36)
+  quoteRequestId String             @db.Char(36)
+  professionalId String             @db.Char(36)
+  price          Float              @db.Float
+  description    String?            @db.Text
+  estimatedDays  Int?
+  status         quote_offer_status @default(PENDING)
+  createdAt      DateTime           @default(now()) @db.DateTime(0)
+  updatedAt      DateTime           @default(now()) @db.DateTime(0)
+  quoteRequest   quote_request      @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  professional   professional       @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([quoteRequestId, professionalId], map: "uniq_quote_offer")
+  @@index([quoteRequestId], map: "idx_offer_request")
+  @@index([professionalId], map: "idx_offer_professional")
+}
+
+// ─── CHAT ────────────────────────────────────────────────────────────────────
+
+model chat_conversation {
+  id                    String         @id @db.Char(36)
+  clientAccountId       String         @db.Char(36)
+  professionalAccountId String         @db.Char(36)
+  createdAt             DateTime       @default(now()) @db.DateTime(0)
+  updatedAt             DateTime       @default(now()) @db.DateTime(0)
+  messages              chat_message[]
+
+  @@unique([clientAccountId, professionalAccountId], map: "uniq_conversation")
+  @@index([clientAccountId], map: "idx_conv_client")
+  @@index([professionalAccountId], map: "idx_conv_professional")
+}
+
+model chat_message {
+  id              String             @id @db.Char(36)
+  conversationId  String             @db.Char(36)
+  senderAccountId String             @db.Char(36)
+  content         String             @db.Text
+  type            chat_message_type  @default(TEXT)
+  isRead          Boolean            @default(false)
+  createdAt       DateTime           @default(now()) @db.DateTime(0)
+  conversation    chat_conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId], map: "idx_msg_conversation")
+  @@index([senderAccountId], map: "idx_msg_sender")
+}
+
+// ─── APPOINTMENTS ────────────────────────────────────────────────────────────
+
+model appointment {
+  id              String             @id @db.Char(36)
+  clientAccountId String             @db.Char(36)
+  professionalId  String             @db.Char(36)
+  serviceJobId    String?            @unique @db.Char(36)
+  scheduledAt     DateTime           @db.DateTime(0)
+  durationMinutes Int                @default(60)
+  address         String?            @db.VarChar(500)
+  notes           String?            @db.Text
+  status          appointment_status @default(PENDING)
+  createdAt       DateTime           @default(now()) @db.DateTime(0)
+  updatedAt       DateTime           @default(now()) @db.DateTime(0)
+  professional    professional       @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([clientAccountId], map: "idx_appt_client")
+  @@index([professionalId], map: "idx_appt_professional")
+  @@index([status], map: "idx_appt_status")
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+
+model notification {
+  id        String            @id @db.Char(36)
+  accountId String            @db.Char(36)
+  type      notification_type
+  title     String            @db.VarChar(255)
+  body      String            @db.Text
+  data      String?           @db.Text
+  isRead    Boolean           @default(false)
+  createdAt DateTime          @default(now()) @db.DateTime(0)
+
+  @@index([accountId], map: "idx_notif_account")
+  @@index([isRead], map: "idx_notif_read")
+}
+
+// ─── SUBSCRIPTIONS ───────────────────────────────────────────────────────────
+
+model subscription_plan {
+  id                  String         @id @db.Char(36)
+  name                String         @unique @db.VarChar(100)
+  description         String?        @db.Text
+  price               Float          @db.Float
+  maxContactsPerMonth Int?
+  isFeatured          Boolean        @default(false)
+  hasAdvancedStats    Boolean        @default(false)
+  createdAt           DateTime       @default(now()) @db.DateTime(0)
+  subscriptions       subscription[]
+}
+
+model subscription {
+  id             String              @id @db.Char(36)
+  professionalId String              @db.Char(36)
+  planId         String              @db.Char(36)
+  status         subscription_status @default(ACTIVE)
+  startDate      DateTime            @db.DateTime(0)
+  endDate        DateTime?           @db.DateTime(0)
+  createdAt      DateTime            @default(now()) @db.DateTime(0)
+  professional   professional        @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  plan           subscription_plan   @relation(fields: [planId], references: [id])
+  payments       payment[]
+
+  @@index([professionalId], map: "idx_sub_professional")
+  @@index([status], map: "idx_sub_status")
+}
+
+// ─── PAYMENTS ────────────────────────────────────────────────────────────────
+
+model payment {
+  id                String         @id @db.Char(36)
+  subscriptionId    String?        @db.Char(36)
+  accountId         String         @db.Char(36)
+  amount            Float          @db.Float
+  currency          String         @default("UYU") @db.VarChar(10)
+  status            payment_status @default(PENDING)
+  method            payment_method @default(CARD)
+  externalReference String?        @db.VarChar(255)
+  createdAt         DateTime       @default(now()) @db.DateTime(0)
+  subscription      subscription?  @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([accountId], map: "idx_payment_account")
+  @@index([status], map: "idx_payment_status")
+}
+
+// ─── ENUMS ───────────────────────────────────────────────────────────────────
+
+enum account_role {
+  USER
+  PROFESSIONAL
+  ADMIN
+}
+
+enum professional_availability {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum professional_status {
+  ACTIVE
+  PAUSED
+  BLOCKED
+}
+
+enum verification_status {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum service_job_status {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+enum review_status {
+  VISIBLE
+  HIDDEN
+}
+
+enum review_report_status {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+enum professional_photo_type {
+  PORTFOLIO
+  BEFORE_AFTER
+}
+
+enum quote_request_status {
+  OPEN
+  ASSIGNED
+  CLOSED
+  EXPIRED
+}
+
+enum quote_offer_status {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum chat_message_type {
+  TEXT
+  IMAGE
+  LOCATION
+}
+
+enum appointment_status {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELED
+  RESCHEDULED
+}
+
+enum notification_type {
+  JOB_REQUEST
+  JOB_STATUS_UPDATE
+  NEW_MESSAGE
+  QUOTE_RECEIVED
+  QUOTE_ACCEPTED
+  APPOINTMENT_SCHEDULED
+  APPOINTMENT_REMINDER
+  REVIEW_RECEIVED
+  SYSTEM
+}
+
+enum subscription_status {
+  ACTIVE
+  CANCELED
+  EXPIRED
+}
+
+enum payment_status {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum payment_method {
+  CARD
+  MERCADO_PAGO
+  TRANSFER
 }
